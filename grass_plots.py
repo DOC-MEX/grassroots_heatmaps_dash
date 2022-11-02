@@ -7,7 +7,8 @@ from functools import reduce
 import plotly.express as px
 #from plotly.offline import plot as plotlyOffline
 
-server_url = "http://localhost:2000/grassroots/public_backend"
+#server_url = "http://localhost:2000/grassroots/public_backend"
+server_url = "https://grassroots.tools/dev/grassroots/public_backend"
 
 '''
 Get study using id

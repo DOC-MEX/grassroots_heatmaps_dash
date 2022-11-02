@@ -35,7 +35,9 @@ for i in range(len(all_studies['results'][0]['results'])):
 studiesIDs.remove('619e159b87a279348474145b')           # DFW Academic Toolkit RRes, Harvest 2021   
 names.remove('DFW Academic Toolkit RRes, Harvest 2021') # DFW Academic Toolkit RRes, Harvest 2021   
 studiesIDs.remove('6225dfde93b7641e4b5acb85')  #  NIAB CSSL AB Glasshouse exp 
-names.remove('NIAB CSSL AB Glasshouse exp ')   # 
+names.remove('NIAB CSSL AB Glasshouse exp ')   #
+studiesIDs.remove('5dd8009ade68e75a927a8274')  #
+names.remove('1st vs 3rd wheat take-all resistance trial')   #
 
 optionsNames = [{'label': names[i], 'value':studiesIDs[i]} for i in range(len(names))]
     
@@ -88,7 +90,7 @@ app.layout = html.Div([
 
      dbc.Row([
       dbc.Col(
-          html.Div("Crop Ontology website:"), width=5   ),
+          html.Div("Crop Ontology website:"), width=6  ),
 
       dbc.Col(
           html.Pre(id='web_link',
@@ -105,7 +107,7 @@ app.layout = html.Div([
       dbc.Col(
           html.Div(id='CLICK'), width=3    ),   # Raw data value or N/A message
       dbc.Col(
-          html.Div(id='ACC_XY'), width=2  ),
+          html.Div(id='ACC_XY'), width=3  ),
       dbc.Col(
           html.Pre(id='SEEDSTOR',
                  style={'white-space': 'pre-wrap','word-break': 'break-all',
@@ -346,6 +348,9 @@ def printing(xy, array, phenotypeSelected):
         
     print("CHECK", xy)
     plotAccession = accession[x][y]
+    if plotAccession=="nan":
+        plotAccession = "Discarded" #Replace text when NaN value. 
+                                    #NaN actually produces a valid value in grassroots.tool/seedstor    
     text = 'Accession: {}'.format(plotAccession)
     url= 'https://grassroots.tools/seedstor/apisearch-unified.php?query='+plotAccession
     print(url)
@@ -357,7 +362,6 @@ def printing(xy, array, phenotypeSelected):
     except:
         print("No response from server")
         seedstorResponse = []
-        
 
     if(len(seedstorResponse) > 0):
         print(seedstorResponse[0]['idPlant'])
@@ -372,9 +376,6 @@ def printing(xy, array, phenotypeSelected):
         link = "Accession not available in seedstor.ac.uk"
         #text = 'Accession: {}'.format(plotAccession) 
         return link, text
-
-    
-    
 
 
  ###################--TEST saving data in DCC.STORE -- #########################
@@ -400,4 +401,5 @@ def display_hoverData(clickData):
         
        
 
-app.run_server(debug=True)
+#app.run_server(debug=True)
+app.run_server(host='10.0.152.67', port='443' ,debug=True)
