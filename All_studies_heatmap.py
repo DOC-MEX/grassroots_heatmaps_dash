@@ -6,6 +6,9 @@ from dash.exceptions import PreventUpdate
 
 #################################################
 import json
+import csv
+import os
+from grassroots_csv import getRowCsv
 from grass_plots import get_all_fieldtrials     
 from grass_plots import get_plot
 from grass_plots import dict_phenotypes
@@ -119,8 +122,10 @@ app.layout = html.Div([
      ],   align="center"),# Row 3. 3 Columns
 
           html.Br(),
+          html.Button("Download CSV file", id="btn-download-txt"),
+          dcc.Download(id="download-text"),
+          html.Br(),
           dcc.Graph(id='HEATMAP'),
-
           dcc.Store(id='XYZ'),
           dcc.Store(id='ACCESSION'),
      
@@ -200,6 +205,18 @@ def update_dropdown_menu(uuid):
     value   = list(dictTraits.keys())[0]
     return options, value
 
+###############################new Download CSV #################################################
+@app.callback(
+    Output("download-text", "data"),
+    Input("btn-download-txt", "n_clicks"),
+    prevent_initial_call=True,
+)
+def func(n_clicks):
+    path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '.', 'CSVs'))
+    csv_data = os.path.join(path, "plot_data.csv")
+
+    return dcc.send_file(csv_data)
+
 ################################################################################################
 ######################  ACTUAL HEATMAP FIGURE ################################################
 @app.callback(
@@ -232,6 +249,10 @@ def update_heatmap(phenotypeDropdown, uuid):
     total_rows        = study_json['results'][0]['results'][0]['data']['num_rows']
     total_columns     = study_json['results'][0]['results'][0]['data']['num_columns']
     phenotypes        = study_json['results'][0]['results'][0]['data']['phenotypes']
+    
+    phenoHeaders = []
+    for key in phenotypes:
+        phenoHeaders.append(key)   # for csv file. Includes non-numerical phenotypes
 
     print("study name :", name)
 
@@ -262,6 +283,47 @@ def update_heatmap(phenotypeDropdown, uuid):
     if ( len(treatment_factors)>0):
           treatment = treatments(plot_data, row, column)
           ### print("treatments", treatment)
+    #-------------------------------------------------------------
+    array_rows  = []
+    pheno_names = []
+    extra_headers = []
+
+    path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '.', 'CSVs'))
+    filename = os.path.join(path, "plot_data.csv")
+    print(filename)
+
+    #mandatory headers
+    headers = ['Plot ID', 'Row', 'Column', 'Accession']
+
+    #loop through plot and get each row for csv file
+    for r in range(len(plot_data)):
+            #j = int( plot_data[r]['column_index'] )
+            row_list = getRowCsv(plot_data[r])
+            array_rows.append(row_list)
+
+    # if treatments available add them to the headers.
+    if len(treatment_factors)>0:
+        treatments_csv=[]
+        for i in range(len(treatment_factors)):
+            treatments_csv.append(treatment_factors[i]['treatment']['so:sameAs'])
+
+        headers.extend(treatments_csv)
+
+    #extra headers
+    extra_headers = ['width','length','Rack','Sowing date', 'Harvest date']
+    
+    headers.extend(extra_headers)
+    headers.extend(phenoHeaders)
+
+    with open(filename, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer = csv.DictWriter(f, fieldnames = headers)
+        writer.writeheader()
+        writer.writerows(array_rows)
+
+    f.close()
+    #-------------------------------------------------------------
+
 
     matrix   = row_raw.reshape(row,column)
 
@@ -402,4 +464,4 @@ def display_hoverData(clickData):
        
 
 #app.run_server(debug=True)
-app.run_server(host='10.0.152.67', port='443' ,debug=True)
+app.run_server(host='10.0.152.67', port='8080' ,debug=True)
