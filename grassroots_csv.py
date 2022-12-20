@@ -12,7 +12,7 @@ def getRowCsv(row_json):
     if  ( 'discard' in row_json['rows'][0] ):
         accession = "Discarded"
     if  ( 'blank' in row_json['rows'][0] ):
-        accession = ''
+        accession = 'Discarded'
     if  ( 'material' in row_json['rows'][0] ):
         accession = row_json['rows'][0]['material']['accession']
         rack      = row_json['rows'][0]['rack_index']
@@ -24,8 +24,13 @@ def getRowCsv(row_json):
     if  ( 'observations' in row_json['rows'][0] ):
         observations = row_json['rows'][0]['observations']
         for i in range(len(observations)):
-            variables.append(observations[i]['phenotype']['variable'])
-            raw_value.append(observations[i]['raw_value'])
+            if  ( 'corrected_value' in observations[i] ):
+                variables.append(observations[i]['phenotype']['variable'])  # correction!!
+                raw_value.append(observations[i]['corrected_value'])
+            elif ( 'raw_value' in observations[i] ):
+                variables.append(observations[i]['phenotype']['variable'])  
+                raw_value.append(observations[i]['raw_value'])
+
 
     if  ( 'treatments' in row_json['rows'][0] ):
         treatments = row_json['rows'][0]['treatments']
