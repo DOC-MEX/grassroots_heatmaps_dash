@@ -9,6 +9,7 @@ import json
 import csv
 import os
 from grassroots_csv import getRowCsv
+from grassroots_csv import create_CSV
 from grass_plots import get_all_fieldtrials     
 from grass_plots import get_plot
 from grass_plots import dict_phenotypes
@@ -283,47 +284,9 @@ def update_heatmap(phenotypeDropdown, uuid):
     if ( len(treatment_factors)>0):
           treatment = treatments(plot_data, row, column)
           ### print("treatments", treatment)
-    #-------------------------------------------------------------
-    array_rows  = []
-    pheno_names = []
-    extra_headers = []
-
-    path = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '.', 'CSVs'))
-    filename = os.path.join(path, "plot_data.csv")
-    print(filename)
-
-    #mandatory headers
-    headers = ['Plot ID', 'Row', 'Column', 'Accession']
-
-    #loop through plot and get each row for csv file
-    for r in range(len(plot_data)):
-            #j = int( plot_data[r]['column_index'] )
-            row_list = getRowCsv(plot_data[r])
-            array_rows.append(row_list)
-
-    # if treatments available add them to the headers.
-    if len(treatment_factors)>0:
-        treatments_csv=[]
-        for i in range(len(treatment_factors)):
-            treatments_csv.append(treatment_factors[i]['treatment']['so:sameAs'])
-
-        headers.extend(treatments_csv)
-
-    #extra headers
-    extra_headers = ['width','length','Rack','Sowing date', 'Harvest date']
-    
-    headers.extend(extra_headers)
-    headers.extend(phenoHeaders)
-
-    with open(filename, 'w', encoding='UTF8', newline='') as f:
-        writer = csv.writer(f)
-        writer = csv.DictWriter(f, fieldnames = headers)
-        writer.writeheader()
-        writer.writerows(array_rows)
-
-    f.close()
-    #-------------------------------------------------------------
-
+    #-----------------------CSV--------------------------------------
+    #create_CSV(plot_array, phenotypes, treatment_factors, study_id)
+    create_CSV(plot_data, phenotypes, treatment_factors, uuid)
 
     matrix   = row_raw.reshape(row,column)
 
