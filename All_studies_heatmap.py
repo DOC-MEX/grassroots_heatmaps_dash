@@ -131,19 +131,15 @@ app.layout = html.Div([
           dcc.Store(id='ACCESSION'),
      
     ]),
-
 #-----------------------------------------------------------------------------
 
         #html.Div(id='PHENOTYPE'),
-
 #-----------------------------------------------------------------------------
 #   html.Div(children=[
 #       ##html.Div(id='TEST'),
 #       html.Br(),
 #       dcc.Graph(id='HEATMAP'),
 #   ]),  
-
-
 ])
 ############################################################################################
 ########################--print UUID of study from dropdown 1-- #############################
@@ -298,6 +294,7 @@ def update_heatmap(phenotypeDropdown, uuid):
     optionsDropdown = [{'label': phenoValues[i], 'value':phenoKeys[i]} for i in range(len(phenoKeys))]
     #fig = plotly_plot(row_raw, accession, traitName, units, plotIDs, treatment)
     figure = plotly_plot(row_raw, accession, traitName, units, plotIDs, treatment)
+    del plot_data, matrices, single_study, study_json
     #return figure, accession, row, column
     return figure, accession
 

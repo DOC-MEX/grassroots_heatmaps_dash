@@ -425,7 +425,8 @@ def plotly_plot(numpy_matrix, accession, title, unit, IDs, treatments):
         hovertemplate="Accession: %{customdata[0]}<br>Raw value: %{customdata[1]}<br>Plot ID: %{customdata[2]} (column: %{x}, row:%{y})<extra></extra>")
         #check=np.moveaxis([accession, s_matrix, plotID, treatments], 0,-1) 
         #print("PLOT_________", accession.shape )
-        fig.update_layout(font=dict(family="Courier New, monospace",size=12,color="Black"),title={
+        
+    fig.update_layout(font=dict(family="Courier New, monospace",size=12,color="Black"),title={
         'text': title,
         'y':0.98,'x':0.5,
         'xanchor': 'center','yanchor': 'top'})
