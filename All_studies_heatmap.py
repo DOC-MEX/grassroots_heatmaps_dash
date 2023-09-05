@@ -1,6 +1,6 @@
 ################### DASH ############################
 import dash
-from dash import html, Input, Output, dcc
+from dash import html, Input, Output, dcc, State
 import dash_bootstrap_components as dbc          
 from dash.exceptions import PreventUpdate        
 
@@ -55,18 +55,22 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 ########################----------LAYOUT-----------############################################
 app.layout = html.Div([
-
-    #dcc.Store(id='STORE'),
+    
     html.Div(children=[
       html.Label(['List of studies:'],style={'font-weight': 'bold', "text-align": "left"}),
-
-      dcc.Dropdown(id='DROPDOWN1',
-          options = optionsNames,
-          value   = optionsNames[0]['value'],
-          searchable = True,
-          style={'width':"100%"},
-          #search_value='',
-      ),
+    dcc.Loading(
+        id="loading studies",
+        type="circle",
+        children=[
+            dcc.Dropdown(id='DROPDOWN1',
+                options = optionsNames,
+                value   = optionsNames[0]['value'],
+                searchable = True,
+                style={'width':"90%"},
+                #search_value='',
+            ),
+        ]
+    ),
       html.Div(id='STUDY'),
       html.Br(),
       
@@ -126,9 +130,16 @@ app.layout = html.Div([
           html.Button("Download CSV file", id="btn-download-txt"),
           dcc.Download(id="download-text"),
           html.Br(),
-          dcc.Graph(id='HEATMAP'),
+          dcc.Loading(
+            id="loading",
+            type="circle",
+            children=[
+                dcc.Graph(id='HEATMAP')
+                     ]
+          ),
           dcc.Store(id='XYZ'),
           dcc.Store(id='ACCESSION'),
+          dcc.Store(id='DATASAVED'),
      
     ]),
 #-----------------------------------------------------------------------------
@@ -171,13 +182,20 @@ def clear_store(uuid):
 ########################### **update dropdown 2 (List of phenotypes)** ###########################
 @app.callback(
     [Output('DROPDOWN2', 'options'),
-     Output('DROPDOWN2', 'value') ],
-     Input( 'DROPDOWN1', 'value') )
+     Output('DROPDOWN2', 'value'),
+     Output('DATASAVED', 'data') ], ### NEW (Sep 2023) Use data storage instead of gettting data from server
+     Input( 'DROPDOWN1', 'value'),
+     State('DATASAVED', 'data'))  # Use the 'State' dependency for 'STUDY' to read its value without triggering the callback )
 
-def update_dropdown_menu(uuid):
+def update_dropdown_menu(uuid, current_study):
+#def update_dropdown_menu(uuid):
 
     if uuid is None:
         raise PreventUpdate
+    
+    # Check if the STUDY data component has been used before    
+    if current_study:
+        current_study = None  # Clear the data if it has been set        
 
     single_study = get_plot(uuid)
     study_json   = json.loads(single_study)
@@ -200,7 +218,7 @@ def update_dropdown_menu(uuid):
     options = [{'label': phenoValues[i], 'value':phenoKeys[i]} for i in range(len(phenoKeys))]
 
     value   = list(dictTraits.keys())[0]
-    return options, value
+    return options, value, single_study  # new 3rd  output is the store component STUDY
 
 ###############################new Download CSV #################################################
 @app.callback(
@@ -219,18 +237,17 @@ def func(n_clicks):
 @app.callback(
     #[Output('HEATMAP', 'figure'), Output('ACCESSION', 'data'), Output('ROWS','data'), Output('COLUMNS','data') ],
     [Output('HEATMAP', 'figure'), Output('ACCESSION', 'data') ],
-    [Input('DROPDOWN2', 'value'), Input('DROPDOWN1', 'value')] )
+    [Input('DROPDOWN2', 'value'), Input('DROPDOWN1', 'value'),
+     Input('DATASAVED', 'data')] )   ## NEW Sep 2023 READ DATA STORED IN STUDY
 
-def update_heatmap(phenotypeDropdown, uuid):
+def update_heatmap(phenotypeDropdown, uuid, study_data):
 
     if phenotypeDropdown is None:
         raise PreventUpdate
 
-
-    #print("------------DASH: input HEATMAP Value 1---------", phenotypeDropdown)
-    #print("------------DASH: input HEATMAP Value 2---------", uuid)
-
-    single_study = get_plot(uuid)
+    #single_study = get_plot(uuid)
+    #study_json   = json.loads(single_study)
+    single_study = study_data
     study_json   = json.loads(single_study)
 
     studies_ids =[]
@@ -303,18 +320,18 @@ def update_heatmap(phenotypeDropdown, uuid):
 ###########-------DISPLAY INFO ABOUT PHENOTYPE CHOSEN--------####### --> CALLS get_plot***
 @app.callback(
     [Output('web_link', 'children'), Output('CO', 'children')],
-    [Input('DROPDOWN2', 'value'), Input('DROPDOWN1', 'value')] )
+    [Input('DROPDOWN2', 'value'), Input('DROPDOWN1', 'value'),
+     Input('DATASAVED', 'data')] )   ## NEW CORRECTION Sep 2023 READ DATA STORED IN STUDY
 
-def check_PhenoName(phenotypeSelected, uuid):
+
+def check_PhenoName(phenotypeSelected, uuid, study_data):
 
     if phenotypeSelected is None:
         raise PreventUpdate
 
-
-    single_study = get_plot(uuid)
-    study_json   = json.loads(single_study)
-    
-    #print("***************    " , )
+    #single_study = get_plot(uuid)
+    #study_json   = json.loads(single_study)
+    study_json   = json.loads(study_data)  # use saved data from STORE component
         
     crop_ontology_url = "https://cropontology.org/term/"
     phenotype = phenotypeSelected.replace('"', "'")
